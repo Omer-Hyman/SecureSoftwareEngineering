@@ -7,7 +7,7 @@ import {
 } from "../models/user";
 import { AggregatePaginateModel, isValidObjectId } from "mongoose";
 import { IRole, IUser } from "../interfaces/user";
-import { GenerateAPIResult, GoThroughJSONAndReplaceObjectIDs, HttpException, RecursiveRemoveUndefinedFields, RemoveUndefinedFieldsRoot } from "../helpers";
+import { GenerateAPIResult, GoThroughJSONAndReplaceObjectIDs, HttpException, RecursiveRemoveUndefinedFields, RemoveUndefinedFieldsRoot, SecurityLog } from "../helpers";
 import { GetUserByID_ControllerStage, GetUsersQuery, UserDecorated, UserPutRequest_ControllerStage, UserPutRequest_ValidationStage } from "../validation/user";
 import bcrypt from "bcryptjs";
 import { IAuthenticatedRequest } from "../interfaces/auth";
@@ -214,7 +214,9 @@ export default class UserController {
 
       if (deleteRes.deletedCount != 1) throw new HttpException(400, "Failed to delete");
 
+      SecurityLog("User deleted", params.id.toString());
       res.status(200).json(GenerateAPIResult(true, "Deleted", undefined));
+
 
     } catch (err) {
       next(err);

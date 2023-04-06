@@ -3,7 +3,7 @@ import { User } from "../models/user";
 import Role from "../models/role";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { GenerateAPIResult, HttpException } from '../helpers';
+import { GenerateAPIResult, HttpException, SecurityLog } from '../helpers';
 import { Request, Response, NextFunction } from 'express';
 import { LoginRequest, RegisterRequest } from '../validation/auth';
 import { IJWTPayload } from '../interfaces/auth';
@@ -19,6 +19,7 @@ export default class AdminController{
 
             const adminRole = await Role.findOne({name : "Admin"});
             if(!adminRole){
+                SecurityLog("failed to create admin user", registerRequest.username);
                 throw new HttpException(500, "Failed to register user", undefined, new Error("Admin role not found"));
             return;
             }
@@ -28,6 +29,8 @@ export default class AdminController{
             // create a new user
             const user = await User.create(newUser);
             res.status(200).json(GenerateAPIResult(true, user._id));
+            SecurityLog("Admin user created successfully", registerRequest.username);
+
         } catch(error){
             next(error);
         }

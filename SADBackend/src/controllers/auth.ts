@@ -1,30 +1,18 @@
-import dotenv from 'dotenv';
 import { User } from "../models/user";
-import Role from "../models/role";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { GenerateAPIResult, HttpException } from '../helpers';
+import { GenerateAPIResult, HttpException, SecurityLog } from '../helpers';
 import { Request, Response, NextFunction } from 'express';
-import { LoginRequest, RegisterRequest } from '../validation/auth';
-import { IJWTPayload } from '../interfaces/auth';
-import { IRole, IUser } from '../interfaces/user';
-const { SECRET = "secret" } = process.env;
+import { LoginRequest } from '../validation/auth';
+import { IRole } from '../interfaces/user';
 
-// class JWTPayload implements IJWTPayload{
-//     UserID: String;
-//     constructor(userID: string){
-//         this.UserID = userID;
-//     }
-// }
 
 export default class AuthController{
 
     public login = async (req: Request, res: Response, next: NextFunction) => {
 
         const { SECRET } = process.env;
-
         try{
-
             if (!SECRET) {
                 next(new HttpException(500, "Internal server error", undefined, new Error("SECRET .env value undefined")));
                 return;
@@ -41,11 +29,13 @@ export default class AuthController{
 
                     const decoded = jwt.decode(token, {complete: true});
                     res.status(200).json(GenerateAPIResult(true, {token: token, expiry: (decoded!.payload as jwt.JwtPayload).exp, roles: user.roles.map((r) => (r as IRole).name)}))
-
+                    SecurityLog("logged in successfully", loginRequest.username);
                 } else{
+                    SecurityLog("failed to log in", loginRequest.username);
                     throw new HttpException(409, "Details are incorrect");
                 }
             } else{
+                SecurityLog("failed to log in", loginRequest.username);
                 throw new HttpException(409, "Details are incorrect");
             }
         } catch(error){

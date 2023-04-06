@@ -1,4 +1,7 @@
-import mongoose from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
+import fs from 'fs';
+const dayjs = require('dayjs');
+
 
 export interface IAPIResponse {
     Success: boolean;
@@ -29,9 +32,13 @@ export class HttpException extends Error implements IAPIResponse {
     }
 }
 
-
 export function GenerateAPIResult(isSuccess: boolean, response?: object | string, error?: object | string): APIResponse {
     return { Success: isSuccess, Response: response, Error: error }
+}
+
+export function SecurityLog(message: string, details: string): void {
+    const now = dayjs();
+    fs.writeFileSync("../main.log", `${now}: ${details} ${message}`);
 }
 
 export const RemoveUndefinedFieldsRoot = (obj: any) => {

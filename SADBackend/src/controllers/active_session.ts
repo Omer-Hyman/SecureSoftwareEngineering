@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import mongoose, { AggregatePaginateModel, isValidObjectId, Schema, Types } from "mongoose";
-import { GenerateAPIResult, GoThroughJSONAndReplaceObjectIDs, HttpException } from "../helpers";
+import { GenerateAPIResult, GoThroughJSONAndReplaceObjectIDs, HttpException, SecurityLog } from "../helpers";
 import bcrypt from "bcryptjs";
 import { GenerateBaseExcludes as UserGenerateBaseExcludes, User } from "../models/user";
 import { IAuthenticatedRequest } from "../interfaces/auth";
@@ -21,11 +21,13 @@ export default class ActiveSessionController {
         try {
             var requestDetails: CreateNewActiveSessionRequest_ControllerStage = plainToInstance(CreateNewActiveSessionRequest_ControllerStage, (req as any)["params"], {});
 
+            SecurityLog("Attempt to generate new active session", requestDetails.sessionID.toString());
+
+
             const session = await Session.findById(requestDetails.sessionID).populate("module");
             if (!session) {
                 throw new HttpException(500, "Failed to find session post-validation");
             }
-
 
             const existingActiveSession = await ActiveSession.findOne({ session: session });
 
@@ -64,6 +66,8 @@ export default class ActiveSessionController {
             const activeSession = await newActiveSession.save();
 
             res.status(200).json(GenerateAPIResult(true, { code: newActiveSession.code }));
+            SecurityLog("New active session generates successfully", requestDetails.sessionID.toString());
+
         }
         catch (err) {
             next(err);
@@ -73,6 +77,8 @@ export default class ActiveSessionController {
     public RecordStudentAttendance = async (req: IAuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
             var requestDetails: RecordStudentAttendanceRequest = (req as any)["params"];
+
+            SecurityLog("Attempt to record student attendance", requestDetails.code);
 
             var succesfullyUpdated = false;
             var maxStack = 16;
@@ -120,10 +126,7 @@ export default class ActiveSessionController {
                     foundSessionAttendance.attendance = "late";
                 } else{
                     foundSessionAttendance.attendance = "full";
-                }
-
-                
-    
+                }   
                 try{
                     session.save();
                     succesfullyUpdated = true;

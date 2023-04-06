@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux'
 import { Typography } from '@mui/material';
+import logMessage from '../components/logging';
 
 async function userLogin(credentials) {
   // Makes login request (POST) with supplied credentials.
